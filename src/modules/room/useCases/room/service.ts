@@ -4,7 +4,7 @@ import { Room, Participant } from '@prisma/client';
 import { prisma } from 'lib/prisma';
 import pino from 'lib/pino';
 
-import { CreateVote, JoinRoom } from 'websocket/handlers/roomHandler/types';
+import { CreateVote, CreteGame, JoinRoom, LeaveRoom } from 'websocket/handlers/roomHandler/types';
 
 type CreateRoom = Pick<Room, 'room'> & Pick<Participant, 'username'>
 
@@ -50,6 +50,7 @@ export class RoomService {
               id: uuid(),
               username,
               vote: '',
+              isAdmin: true,
               room: {
                 connect: {
                   id: _room.id
@@ -176,5 +177,68 @@ export class RoomService {
       room,
       participants
     }
+  }
+
+  async newGame ({  room_id }: CreteGame) {
+    const room = await prisma.room.findFirst({
+      where: {
+        id: room_id
+      }
+    })
+
+    await prisma.participant.updateMany({
+      where: {
+        room_id
+      },
+      data: {
+        vote: ''
+      }
+    })
+
+    const participants = await prisma.participant.findMany({
+      where: {
+        room_id
+      }
+    })
+
+    return {
+      _participatns: participants,
+      _room: room
+    }
+  }
+
+  async findRoom (id: string) {
+    return await prisma.room.findFirst({
+      where: {
+        id
+      }
+    })
+  }
+
+  async deleteDoom ({ room_id, user_id }: LeaveRoom) {
+    await prisma.$transaction(async _prisma => {
+      await _prisma.participant.delete({
+        where: {
+          id: user_id,
+        },
+      })
+
+      await _prisma.room.update({
+        where: {
+          id: room_id
+        },
+        data: {
+          participants: {
+            update: {
+              where: {
+                id: user_id
+              },
+              data: {}
+            }
+          }
+        }
+      })
+    })
+
   }
 }

@@ -6,8 +6,8 @@ export interface CreateRoom {
 }
 
 export interface LeaveRoom {
-  room_name: string;
-  username: string
+  room_id: string;
+  user_id: string
 }
 
 export interface JoinRoom {
@@ -23,6 +23,10 @@ export interface RoomResponse {
 export interface CreateVote {
   vote: string;
   user_id: string;
+  room_id: string
+}
+
+export interface CreteGame {
   room_id: string
 }
 

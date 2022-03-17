@@ -5,7 +5,7 @@ import pino from 'lib/pino'
 
 import { roomService } from 'modules/room'
 
-import { CreateRoom, CreateVote, JoinRoom, LeaveRoom, RoomResponse } from './types'
+import { CreateRoom, CreateVote, JoinRoom, LeaveRoom, CreteGame } from './types'
 
 
 export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> ,socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>) {
@@ -47,9 +47,9 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
     pino.info(`client ${result?._participant.username} create n' joined to room ${room_name}`)
   }
 
-  function leaveRoom (payload: LeaveRoom) {
-    socket.leave(payload.room_name)
-    pino.info(`client ${socket.id} leave to room ${payload.room_name}`)
+  async function leaveRoom (payload: LeaveRoom) {
+    await roomService.deleteDoom(payload)
+    pino.info(`client ${payload.user_id} leave to room ${payload.room_id}`)
   }
 
   async function voteRoom (payload: CreateVote) {
@@ -61,9 +61,23 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
 
   }
 
+  async function newGame (payload: CreteGame) {
+    const result = await roomService.newGame(payload)
+    
+    io.to(result?._room?.room as string).emit('room:participant-join', result._participatns)
+    io.to(result?._room?.room as string).emit('room:restart-game')
+  }
+
+  async function startCount (payload: CreteGame) {
+    const result = await roomService.findRoom(payload.room_id)
+    io.to(result?.room as string).emit('room:start-count-client')
+    pino.info('user start count')
+  }
 
   socket.on('room:create', createRoom)
-  socket.on('room:destroy', leaveRoom)
+  socket.on('room:leave', leaveRoom)
   socket.on('room:vote', voteRoom)
   socket.on('room:join', joinRoom)
+  socket.on('room:new-game', newGame)
+  socket.on('room:start-count-server', startCount)
 }
