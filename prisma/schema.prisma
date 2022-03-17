@@ -13,8 +13,8 @@ datasource db {
 
 model Room {
   id String @id
-  room String
   created_at DateTime @default(now())
+  name String
   participants Participant[]
 }
 
