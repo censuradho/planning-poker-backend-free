@@ -5,7 +5,7 @@ import 'websocket'
 
 import pino from 'lib/pino'
 
-const PORT = (process.env.PORT || 3333 )as number
+const PORT = (process.env.PORT || 3334 )as number
 
 const server = app.listen(PORT, () => {
 	const { address, port } = server.address() as AddressInfo

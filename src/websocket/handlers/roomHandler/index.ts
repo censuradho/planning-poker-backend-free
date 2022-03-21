@@ -4,8 +4,9 @@ import { DefaultEventsMap } from 'socket.io/dist/typed-events'
 import pino from 'lib/pino'
 
 import { roomService } from 'modules/room'
-import { CreateRoom } from './types'
+import { CardSelected, CreateRoom, JoinRoomRequest } from './types'
 
+type JoinRoom = Omit<JoinRoomRequest, 'socket_id'>
 
 export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> ,socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>) {
   async function createRoom (payload: CreateRoom) {
@@ -17,19 +18,59 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
       socket_id: socket.id
     })
 
+    const response = {
+      ...result,
+      participants: []
+    }
+
     socket.join(result.room.id)
-    socket.emit('room:create:response')
+    socket.emit('room:join:response', response)
     pino.info(`Client ${result.participant.username} created a room ${result.room.name}`)
   }
 
-  async function desconnectParticipant () {
+  async function joinRoom(payload: JoinRoom) {
+    const result = await roomService.joinParticipantToRoom(
+      payload.room_id,
+      { 
+        room_id: payload.room_id,
+        username: payload.username,
+        socket_id: socket.id
+      }
+    )
+
+    socket.join(result.room.id)
+    socket.emit('room:join:response', result)
+    pino.info(`Client ${result.participant.username} join to ${result.room.name}`)
 
 
-    await roomService.desconectParticipant(socket.id)
+  }
 
-    pino.info(`client ${socket.id} was disconnected`)
+  async function cardSelected (payload: CardSelected) {
+    const { room_id, user_id, vote } = payload
+
+    const result = await roomService.vote(user_id, room_id, vote)
+
+    const { participants, ...room } = result
+
+    const response = {
+      participants,
+      room
+    }
+
+    io.to(room_id).except(socket.id).emit('room:select-card:response', response)
+  }
+
+  function showCards(room_id: string) {
+    io.to(room_id).emit('room:show-card:response')
+  }
+
+  function restartGame (room_id: string) {
+    io.to(room_id).emit('room:restart-game:response')
   }
 
   socket.on('room:create:request', createRoom)
-  socket.on('disconnect', desconnectParticipant)
+  socket.on('room:join:request', joinRoom)
+  socket.on('room:select-card:request', cardSelected)
+  socket.on('room:show-card:request', showCards)
+  socket.on('room:restart-game:request', restartGame)
 }

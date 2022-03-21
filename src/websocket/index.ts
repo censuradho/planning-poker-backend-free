@@ -16,4 +16,5 @@ const onConnection = (socket: Socket<DefaultEventsMap, DefaultEventsMap, Default
 
 Io.on('connection', socket => {
   onConnection(socket)
+  pino.info(`new connection ${socket.id}`)
 })

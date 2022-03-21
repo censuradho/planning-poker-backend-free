@@ -20,6 +20,7 @@ model Room {
 
 model Participant {
   id String @id
+  socket_id String
   isAdmin Boolean @default(false)
   username String
   vote String
