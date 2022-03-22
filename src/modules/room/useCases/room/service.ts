@@ -187,4 +187,24 @@ export class RoomService {
     })
   }
 
+  async restartGame (room_id: string) {
+    return await prisma.room.update({
+      where: {
+        id: room_id
+      },
+      data: {
+        participants: {
+          updateMany: {
+            where: {
+              room_id: room_id
+            },
+            data: {
+              vote: ''
+            }
+          }
+        }
+      },
+    })
+  }
+
 }

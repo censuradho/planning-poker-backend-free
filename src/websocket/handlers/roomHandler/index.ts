@@ -60,14 +60,15 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
       room
     }
 
-    io.to(room_id).except(socket.id).emit('room:select-card:response', response)
+    io.to(room_id).emit('room:select-card:response', response)
   }
 
   function showCards(room_id: string) {
     io.to(room_id).emit('room:show-card:response')
   }
 
-  function restartGame (room_id: string) {
+  async function restartGame (room_id: string) {
+   await roomService.restartGame(room_id)
     io.to(room_id).emit('room:restart-game:response')
   }
 
