@@ -38,11 +38,14 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
       }
     )
 
+    if (!result) return pino.info('room not found')
+    
+    const { participants, ...data } = result
     socket.join(result.room.id)
-    socket.emit('room:join:response', result)
+    socket.emit('room:join:response', data)
+    io.to(result.room.id).emit('room:join-participant:response', participants)
+
     pino.info(`Client ${result.participant.username} join to ${result.room.name}`)
-
-
   }
 
   async function cardSelected (payload: CardSelected) {

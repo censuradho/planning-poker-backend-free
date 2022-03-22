@@ -12,7 +12,6 @@ import { ErrorHandler } from 'utils/errorHandler';
 
 type FindParticipantBy = Partial<Pick<Participant, 'id' | 'socket_id' | 'username' | 'room_id'>>
 
-type UpdateParticipant = Partial<Pick<Participant, 'socket_id' | 'username' | 'vote'>>
 type FindRoomBy = Partial<Pick<Room, 'id' | 'name'>>
 
 export class RoomService {
@@ -88,63 +87,80 @@ export class RoomService {
   }
 
   async joinParticipantToRoom (room_id: string, data: JoinRoomRequest) {
-    const participant = {} as Participant
+    try {
+      const participant = {} as Participant
 
-    const existRoom = await this.findRoomBy({
-      id: room_id
-    })
+      const existRoom = await this.findRoomBy({
+        id: room_id
+      })
+  
+      if (!existRoom) throw new ErrorHandler({
+        error: 'room_not_exist',
+        statusCode: 404
+      })
+      const existParticipant = await this.findParticipantBy(
+        { username: data.username },
+      )
+  
+      if (existParticipant) {
+ 
+        const participantUpdated = await prisma.participant.update({
+          where: {
+            id: existParticipant.id
+          },
+          data: {
+            socket_id: data.socket_id,
+            room_id: data.room_id,
+            vote: ''
+          }
+        })
 
-    if (!existRoom) throw new ErrorHandler({
-      error: 'room_already_exist',
-      statusCode: 404
-    })
-    const existParticipant = await this.findParticipantBy(
-      { username: data.username },
-    )
-
-    if (existParticipant) {
-      Object.assign(participant, existParticipant)
-    } else {
-      const newParticipant = await prisma.participant.create({
-        data: {
-          id: uuid(),
-          socket_id: data.socket_id,
-          username: data.username,
-          vote: '',
-          isAdmin: false,
-          room: {
-            connect: {
-              id: room_id
+        Object.assign(participant, participantUpdated)
+      } else {
+        const newParticipant = await prisma.participant.create({
+          data: {
+            id: uuid(),
+            socket_id: data.socket_id,
+            username: data.username,
+            vote: '',
+            isAdmin: false,
+            room: {
+              connect: {
+                id: room_id
+              }
             }
           }
+        })
+  
+        Object.assign(participant, newParticipant)
+      }
+  
+
+      const roomUpdated = await prisma.room.update({
+        where: {
+          id: room_id
+        },
+        data: {
+          participants: {
+            connect: {
+              id: participant.id
+            }
+          }
+        },
+        include: {
+          participants: true
         }
       })
-
-      Object.assign(participant, newParticipant)
-    }
-
-    const roomUpdated = await prisma.room.update({
-      where: {
-        id: room_id
-      },
-      data: {
-        participants: {
-          connect: {
-            id: participant.id
-          }
-        }
-      },
-      include: {
-        participants: true
+  
+      const { participants, ...room } = roomUpdated
+  
+      return {
+        room,
+        participant,
+        participants
       }
-    })
-
-    const {  participants, ...room } = roomUpdated
-
-    return {
-      room,
-      participant,
-      participants
+    } catch (err) {
+      pino.error(err)
     }
   }
 
