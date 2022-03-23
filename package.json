@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev --inspect --exit-child --transpile-only --ignore-watch node_modules --respawn -r tsconfig-paths/register src/server.ts | pino-pretty",
-    "migration:run": "prisma migrate dev"
+    "migration:run": "prisma migrate dev",
+    "studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^3.11.0",
