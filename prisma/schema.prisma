@@ -24,7 +24,7 @@ model Participant {
   isAdmin Boolean @default(false)
   username String
   vote String
-  room_id String
-  room Room @relation(fields: [room_id], references: [id])
+  room_id String?
+  room Room? @relation(fields: [room_id], references: [id])
   created_at DateTime @default(now())
 }
