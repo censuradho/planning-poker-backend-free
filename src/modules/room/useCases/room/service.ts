@@ -207,4 +207,26 @@ export class RoomService {
     })
   }
 
+  async disconnectParticipant (socket_id: string) {
+    const participant = await this.findParticipantBy({ socket_id })
+
+    if (!participant) throw new ErrorHandler({
+      error: 'user_not_exist',
+      statusCode: 404
+    })
+
+    if (participant.isAdmin) return;
+
+    await prisma.participant.update({
+      where: {
+        id: participant.id,
+      },
+      data: {
+        vote: '',
+        room: {},
+      },
+    })
+
+  }
+
 }

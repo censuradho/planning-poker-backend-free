@@ -72,9 +72,15 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
     io.to(room_id).emit('room:restart-game:response')
   }
 
+  async function disconnect () {
+    await roomService.disconnectParticipant(socket.id)
+  }
+
   socket.on('room:create:request', createRoom)
   socket.on('room:join:request', joinRoom)
   socket.on('room:select-card:request', cardSelected)
   socket.on('room:show-card:request', showCards)
   socket.on('room:restart-game:request', restartGame)
+  socket.on('disconnect', disconnect)
 }
+
