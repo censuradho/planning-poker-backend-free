@@ -216,6 +216,15 @@ export class RoomService {
     })
 
     if (participant.isAdmin) return;
+    
+    const existRoom = await prisma.room.findFirst({
+      where: {
+        id: participant.room_id
+      },
+      include: {
+        participants: true
+      }
+    })
 
     await prisma.participant.update({
       where: {
@@ -227,6 +236,14 @@ export class RoomService {
       },
     })
 
+    if (!existRoom) throw new ErrorHandler({ error: 'room_not_exist', statusCode: 404 })
+
+    const { participants, ...room } = existRoom
+
+    return {
+      room,
+      participants
+    }
   }
 
 }

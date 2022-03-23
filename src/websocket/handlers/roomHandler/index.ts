@@ -73,7 +73,10 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
   }
 
   async function disconnect () {
-    await roomService.disconnectParticipant(socket.id)
+
+
+    pino.info(`Client ${socket.id} disconnect`)
+
   }
 
   socket.on('room:create:request', createRoom)
