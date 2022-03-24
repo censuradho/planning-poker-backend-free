@@ -28,7 +28,6 @@ export function roomHandler (io: Server<DefaultEventsMap, DefaultEventsMap, Defa
   }
 
   async function joinRoom(payload: JoinRoom) {
-    pino.info('aaaaaaaaaa')
     const result = await roomService.joinParticipantToRoom(
       payload.room_id,
       { 

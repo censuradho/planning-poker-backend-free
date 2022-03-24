@@ -215,7 +215,7 @@ export class RoomService {
       statusCode: 404
     })
 
-    if (participant.isAdmin) return;
+    if (participant.isAdmin || !participant.room_id) return;
     
     const existRoom = await prisma.room.findFirst({
       where: {
